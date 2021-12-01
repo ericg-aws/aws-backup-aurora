@@ -1,0 +1,11 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "StepFunctionAccess",
+            "Effect": "Allow",
+            "Action": "states:StartExecution",
+            "Resource": "${step_function_arn}"
+        }
+    ]
+}

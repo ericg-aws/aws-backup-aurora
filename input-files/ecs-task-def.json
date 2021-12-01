@@ -1,0 +1,34 @@
+${jsonencode([
+    {
+        "name": "${name}",
+        "image": "${container_image}",
+        "essential": true,
+        "portMappings": [],
+        "command": [
+            "${container_comm01}",
+            "${container_comm02}"
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "${log_group}",
+                "awslogs-region": "${region}",
+                "awslogs-stream-prefix": "ecs"
+            },
+            "secretOptions": []
+        },
+        "cpu": "${container_cpu}",
+        "memory": "${container_mem}",
+        "environment": [
+            {
+                "name": "LOCAL_USER_ID",
+                "value": "501"
+            },
+            {
+                "name": "LOCAL_USER_GID",
+                "value": "501"
+            }
+        ],
+        "taskRoleArn": "${task_role}"
+    }
+])}

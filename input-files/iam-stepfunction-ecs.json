@@ -1,0 +1,31 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "SFRunECSTask",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:RunTask",
+                "ecs:StopTask"
+            ],
+            "Resource": [ "${ecs_task1_arn}" ]
+        },
+        {
+            "Sid": "SFPassRole",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::*:role/${project}*"
+            ]
+        },
+        {
+            "Sid": "StepFunctionInoke",
+            "Effect": "Allow",
+            "Action": "lambda:InvokeFunction",
+            "Resource": "${lambda_arn}"
+        }
+    ]
+}

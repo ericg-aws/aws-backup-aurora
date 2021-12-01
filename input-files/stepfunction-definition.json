@@ -1,0 +1,85 @@
+{
+    "Comment": "Searches for backup tags and initiates ECS backup tasks",
+    "StartAt": "backup-aurora-gather",
+    "States": {
+        "backup-aurora-gather": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "Payload.$": "$",
+                "FunctionName": "${step_function_arn}"
+            },
+            "Retry": [
+                {
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6,
+                    "BackoffRate": 2
+                }
+            ],
+            "Next": "fan-out-instances"
+        },
+        "fan-out-instances": {
+            "Type": "Map",
+            "End": true,
+            "Iterator": {
+                "StartAt": "ECS RunTask",
+                "States": {
+                    "ECS RunTask": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::ecs:runTask",
+                        "Parameters": {
+                            "LaunchType": "FARGATE",
+                            "Cluster": "${ecs_cluster_arn}",
+                            "TaskDefinition": "${ecs_task_arn}",
+                            "NetworkConfiguration": {
+                                "AwsvpcConfiguration": {
+                                    "AssignPublicIp": "ENABLED",
+                                    "SecurityGroups": [ "${security_group_id}" ],
+                                    "Subnets": ${jsonencode(vpc_subnet_ids)}
+                                }
+                            },
+                            "Overrides": {
+                                "ContainerOverrides": [
+                                    {
+                                        "Name": "backup-aurora-task01",
+                                        "Environment": [
+                                            {
+                                                "Name": "cluster_id",
+                                                "Value.$": "$.cluster_id"
+                                            },
+                                            {
+                                                "Name": "instance_endpoint",
+                                                "Value.$": "$.instance_endpoint"
+                                            },
+                                            {
+                                                "Name": "instance_username",
+                                                "Value.$": "$.instance_username"
+                                            },
+                                            {
+                                                "Name": "instance_secret_name",
+                                                "Value.$": "$.instance_secret_name"
+                                            },
+                                            {
+                                                "Name": "s3_bucket",
+                                                "Value": "${s3_bucket}"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        "End": true
+                    }
+                }
+            },
+            "MaxConcurrency": 200,
+            "ItemsPath": "$.body"
+        }
+    }
+}
